@@ -1,3 +1,5 @@
+/*global module, require */
+
 (function () {
 
 	'use strict';
@@ -101,11 +103,14 @@
 		},
 
 		fire: function ( eventName ) {
-			var args = Array.prototype.slice.call( arguments, 1 ),
-				subscribers = this.subscribers[ eventName ] || [];
+			var self, args, subscribers;
+
+			self = this;
+			args = Array.prototype.slice.call( arguments, 1 );
+			subscribers = this.subscribers[ eventName ] || [];
 
 			subscribers.forEach( function ( subscriber ) {
-				subscriber.apply( null, args );
+				subscriber.apply( self, args );
 			});
 		}
 	};
