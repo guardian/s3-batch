@@ -76,13 +76,11 @@
 					self.completed.files += 1;
 					self.completed.bytes += file.data.length;
 
-					self.fire( 'success', file );
-
 					// remove from inProgress
 					self.inProgress.splice( self.inProgress.indexOf( params ), 1 );
 
 					// fire progress event
-					self.fire( 'progress', self.completed.bytes / self.total.bytes );
+					self.fire( 'progress', self.completed.bytes / self.total.bytes, file );
 
 					// if there are no more, fire complete event
 					if ( !self.inProgress.length ) {

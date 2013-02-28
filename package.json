@@ -1,7 +1,7 @@
 {
 	"name": "s3-batch",
 	"description": "Batch upload data to S3. Assumes you are already using aws-sdk",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"author": {
 		"name": "Rich Harris"
 	},
