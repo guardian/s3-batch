@@ -46,7 +46,7 @@
 		},
 
 		start: function () {
-			var self, next, putObjectRequest, inProgress, total, completed;
+			var self;
 
 			self = this;
 			
@@ -54,7 +54,7 @@
 			
 			this._queue.forEach( function ( file, i ) {
 				
-				var params;
+				var params, putObjectRequest;
 
 				self.inProgress.push( file );
 
@@ -79,13 +79,13 @@
 					self.fire( 'success', file );
 
 					// remove from inProgress
-					inProgress.splice( self.inProgress.indexOf( params ), 1 );
+					self.inProgress.splice( self.inProgress.indexOf( params ), 1 );
 
 					// fire progress event
 					self.fire( 'progress', self.completed.bytes / self.total.bytes );
 
 					// if there are no more, fire complete event
-					if ( !inProgress.length ) {
+					if ( !self.inProgress.length ) {
 						self.fire( 'complete' );
 					}
 				});
