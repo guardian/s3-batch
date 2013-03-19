@@ -46,50 +46,78 @@
 		},
 
 		start: function () {
-			var self;
-
-			self = this;
+			var self = this;
+			var completed = false;
+			var maxConnections = 16;//maximum parallel uploads
 			
 			self.inProgress = [];
-			
-			this._queue.forEach( function ( file, i ) {
-				
-				var params, putObjectRequest;
 
-				self.inProgress.push( file );
+			//this function checks there are enough uploads happening. start some more if needed.
+			//detect when everything is done.
+			var processQueue = function(){
+				if((self._queue.length + self.inProgress.length) > 0){
+					//there are uploads queued or in progress. start some queued jobs, up to the connection limit
+					while(self._queue.length > 0 && self.inProgress.length < maxConnections){
+						startNextFile();
+					}
+				} else {
+					//everything is finished
+					if(!completed){
+						completed = true;
+						complete();
+					}
+				}
+			};
 
-				self.fire( 'start', file );
+			//get next queued file for uploading
+			var startNextFile = function(){
+				var file = self._queue.pop();
+				uploadFile(file);
+			};
 
-				params = extend({}, self._defaults, file.params, {
+			//upload a file
+			var uploadFile = function(file){
+				self.inProgress.push(file.key);
+				var params = extend({}, self._defaults, file.params, {
 					Key: file.key,
 					Body: file.data
 				});
 
-				putObjectRequest = self.s3.client.putObject( params );
-				
-				putObjectRequest.on( 'error', function () {
-					self.fire( 'error', file );
+				var putObjectRequest = self.s3.client.putObject( params );
+			
+				putObjectRequest.on( 'error', function (e) {
+					self.fire( 'error', file , e);
 				});
 
 				putObjectRequest.on( 'success', function () {
-					
+
 					self.completed.files += 1;
 					self.completed.bytes += file.data.length;
-
-					// remove from inProgress
-					self.inProgress.splice( self.inProgress.indexOf( params ), 1 );
 
 					// fire progress event
 					self.fire( 'progress', self.completed.bytes / self.total.bytes, file );
 
-					// if there are no more, fire complete event
-					if ( !self.inProgress.length ) {
-						self.fire( 'complete' );
-					}
+					fileComplete(file);
+					
 				});
-
 				putObjectRequest.send();
-			});
+			};
+
+			//callback when a file is complete. remove it from inProgress list
+			//call processQueue to add start more uploads
+			var fileComplete = function(file){
+				self.inProgress.splice( self.inProgress.indexOf( file.key ), 1 );
+				processQueue();
+			};
+
+
+			var complete = function(){
+				self.fire( 'complete' );
+			};
+
+			//start the upload process
+			processQueue();
+
 		},
 
 		on: function ( eventName, callback ) {
